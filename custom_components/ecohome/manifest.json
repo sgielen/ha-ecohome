@@ -1,0 +1,11 @@
+{
+  "domain": "ecohome",
+  "name": "Eco-Home",
+  "version": "0.1.2",
+  "config_flow": true,
+  "documentation": "https://github.com/sgielen/ha-ecohome",
+  "issue_tracker": "https://github.com/sgielen/ha-ecohome/issues",
+  "requirements": ["ecohome>=0.1.2"],
+  "codeowners": ["@sgielen"],
+  "iot_class": "cloud_polling"
+}
