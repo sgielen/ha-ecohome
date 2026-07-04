@@ -7,5 +7,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/sgielen/ha-ecohome/issues",
   "requirements": ["ecohome>=0.1.2"],
-  "version": "0.1.2"
+  "version": "0.1.3"
 }
