@@ -42,6 +42,13 @@ added yet, but this is probably an easy fix.
 
 ## Development
 
+### Running tests
+
+This project uses `uv` for dependency management and `pytest` for testing.
+
+- Install dependencies: `uv sync`
+- Run the test suite: `uv run pytest`
+
 ### Releases
 
 - Update version number in `pyproject.toml` and
