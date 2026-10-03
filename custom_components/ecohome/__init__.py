@@ -7,6 +7,7 @@ from ecohome import AsyncEcoHomeClient
 
 from .const import DOMAIN
 from .coordinator import EcoHomeCoordinator
+from .language import api_language
 
 PLATFORMS = [Platform.CLIMATE, Platform.WATER_HEATER, Platform.SENSOR]
 
@@ -16,6 +17,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         client = await AsyncEcoHomeClient.login(
             entry.data["username"],
             entry.data["password"],
+            language=api_language(hass.config.language),
         )
         devices = await client.list_devices()
     except Exception as err:
