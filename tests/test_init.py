@@ -12,6 +12,21 @@ async def test_setup_loads_entry(hass, setup_integration):
     assert entry.state == ConfigEntryState.LOADED
 
 
+async def test_setup_passes_home_assistant_language(
+    hass, setup_integration, mock_login
+):
+    mock_login.integration_login.assert_awaited_once_with(
+        "test@example.com",
+        "testpassword",
+        language="en_US",
+    )
+    mock_login.coordinator_login.assert_awaited_once_with(
+        "test@example.com",
+        "testpassword",
+        language="en_US",
+    )
+
+
 async def test_setup_registers_all_entity_types(hass, setup_integration):
     registry = er.async_get(hass)
 

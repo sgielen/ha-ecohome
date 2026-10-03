@@ -8,6 +8,7 @@ from homeassistant.helpers import selector
 from ecohome import AsyncEcoHomeClient, AuthenticationFailedError
 
 from .const import CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES, DOMAIN
+from .language import api_language
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class EcoHomeConfigFlow(ConfigFlow, domain=DOMAIN):
                 await AsyncEcoHomeClient.login(
                     user_input["username"],
                     user_input["password"],
+                    language=api_language(self.hass.config.language),
                 )
             except AuthenticationFailedError:
                 errors["base"] = "invalid_auth"

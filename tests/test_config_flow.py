@@ -28,7 +28,11 @@ async def test_user_step_creates_entry(hass, mock_client):
 
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["data"] == {"username": "test@example.com", "password": "secret"}
-    cls.login.assert_awaited_once_with("test@example.com", "secret")
+    cls.login.assert_awaited_once_with(
+        "test@example.com",
+        "secret",
+        language="en_US",
+    )
 
 
 async def test_user_step_wrong_password_shows_invalid_auth(hass):
