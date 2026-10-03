@@ -87,6 +87,8 @@ def mock_login(mock_client):
     ):
         for cls in (cf_cls, coord_cls, init_cls):
             cls.login = AsyncMock(return_value=mock_client)
+        mock_client.integration_login = init_cls.login
+        mock_client.coordinator_login = coord_cls.login
         yield mock_client
 
 

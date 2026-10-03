@@ -9,6 +9,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from ecohome import AsyncEcoHomeClient, SessionExpiredError
 
 from .const import CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES, DOMAIN
+from .language import api_language
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ class EcoHomeCoordinator(DataUpdateCoordinator):
         self.device_name: str = device.get("device_nick_name") or device["device_code"]
         self.device_model: str = device.get("device_name") or "Eco-Home"
         self.device_img_url: str | None = device.get("product_img_url")
+        self._language = api_language(hass.config.language)
         self._client: AsyncEcoHomeClient | None = None
 
     async def _get_client(self) -> AsyncEcoHomeClient:
@@ -44,6 +46,7 @@ class EcoHomeCoordinator(DataUpdateCoordinator):
             self._client = await AsyncEcoHomeClient.login(
                 self._entry.data["username"],
                 self._entry.data["password"],
+                language=self._language,
             )
         return self._client
 
@@ -57,6 +60,7 @@ class EcoHomeCoordinator(DataUpdateCoordinator):
                     self._entry.data["username"],
                     self._entry.data["password"],
                     force_relogin=True,
+                    language=self._language,
                 )
                 return await self._fetch()
             except Exception as err:
