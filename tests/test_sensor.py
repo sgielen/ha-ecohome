@@ -1,3 +1,5 @@
+from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_UNIT_OF_MEASUREMENT
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.ecohome.const import DOMAIN
@@ -49,3 +51,27 @@ async def test_valid_value_is_float(hass, setup_integration):
     entity_id = registry.async_get_entity_id("sensor", DOMAIN, f"{DEVICE_CODE}_sensors_1000")
     state = hass.states.get(entity_id)
     assert state.state == "21.5"
+
+
+async def test_empty_value_is_none(hass, setup_integration):
+    """An empty addressValue on a numeric sensor should report unknown, not raise."""
+    registry = er.async_get(hass)
+    entity_id = registry.async_get_entity_id("sensor", DOMAIN, f"{DEVICE_CODE}_sensors_1003")
+    assert hass.states.get(entity_id).state == "unknown"
+
+
+async def test_unparseable_numeric_value_is_none(hass, setup_integration):
+    """A non-numeric addressValue on a sensor with a unit should report unknown, not raise."""
+    registry = er.async_get(hass)
+    entity_id = registry.async_get_entity_id("sensor", DOMAIN, f"{DEVICE_CODE}_sensors_1004")
+    assert hass.states.get(entity_id).state == "unknown"
+
+
+async def test_unicode_celsius_unit_is_normalized(hass, setup_integration):
+    """The single-character \u2103 unit should map to \u00b0C with temperature device class."""
+    registry = er.async_get(hass)
+    entity_id = registry.async_get_entity_id("sensor", DOMAIN, f"{DEVICE_CODE}_sensors_1005")
+    state = hass.states.get(entity_id)
+    assert state.state == "38.0"
+    assert state.attributes[ATTR_UNIT_OF_MEASUREMENT] == "°C"
+    assert state.attributes[ATTR_DEVICE_CLASS] == SensorDeviceClass.TEMPERATURE

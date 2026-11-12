@@ -19,6 +19,13 @@ _UNIT_TO_DEVICE_CLASS: dict[str, SensorDeviceClass] = {
     "kW": SensorDeviceClass.POWER,
 }
 
+# The API sometimes uses the single-character Unicode degree symbols; Home Assistant
+# only accepts the two-character forms as valid temperature units.
+_UNIT_ALIASES: dict[str, str] = {
+    "\u2103": "°C",  # ℃
+    "\u2109": "°F",  # ℉
+}
+
 
 def _all_params(items: list[dict]) -> list[dict]:
     result = []
@@ -27,6 +34,7 @@ def _all_params(items: list[dict]) -> list[dict]:
         if not address:
             continue
         unit = item.get("unit") or ""
+        unit = _UNIT_ALIASES.get(unit, unit)
         result.append({
             "address": address,
             "name": (item.get("pointName") or address).strip(),
@@ -57,6 +65,7 @@ class EcoHomeSensor(CoordinatorEntity[EcoHomeCoordinator], SensorEntity):  # typ
         super().__init__(coordinator)
         self._address = param["address"]
         self._source = source
+        self._numeric = param["numeric"]
         unit = param["unit"] or None
         self._attr_name = param["name"]
         self._attr_unique_id = f"{coordinator.device_code}_{source}_{self._address}"
@@ -75,13 +84,14 @@ class EcoHomeSensor(CoordinatorEntity[EcoHomeCoordinator], SensorEntity):  # typ
         for item in self.coordinator.data[self._source]:
             if item["address"] == self._address:
                 raw = item.get("addressValue")
-                if raw is None or raw == "N/A":
+                if raw is None or raw in ("", "N/A"):
                     self._attr_native_value = None
                     return
                 try:
                     self._attr_native_value = float(raw)
                 except (ValueError, TypeError):
-                    self._attr_native_value = str(raw)
+                    # Numeric sensors must never get a string state; HA raises on it.
+                    self._attr_native_value = None if self._numeric else str(raw)
                 return
         self._attr_native_value = None
 

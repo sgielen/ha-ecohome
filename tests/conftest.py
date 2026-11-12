@@ -44,6 +44,9 @@ MOCK_SENSOR_PARAMS = [
     {"address": "1000", "addressValue": "21.5", "pointName": "Outdoor temp", "unit": "°C"},
     {"address": "1001", "addressValue": "45.0", "pointName": "Water inlet temp", "unit": "°C"},
     {"address": "1002", "addressValue": "N/A", "pointName": "Unused sensor", "unit": "°C"},
+    {"address": "1003", "addressValue": "", "pointName": "Empty sensor", "unit": "°C"},
+    {"address": "1004", "addressValue": "--", "pointName": "Garbage sensor", "unit": "°C"},
+    {"address": "1005", "addressValue": "38.0", "pointName": "Plate HX inlet", "unit": "\u2103"},
 ]
 
 # Type 1: operational (nested in modules)
