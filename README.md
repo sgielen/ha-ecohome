@@ -34,9 +34,14 @@ Assistant.
 
 After installation, you can add the integration inside Home Assistant settings
 -> Devices and Services, search for Eco-Home.  This requires your username and
-password. If you have only one device, it is immediately added; if you have
-multiple you can select which ones to add.  Devices that other users have
-shared with you are added as well.
+password. All devices in your account are added, including devices that other
+users have shared with you.
+
+If you don't want a device in Home Assistant, open its device page and choose
+"Disable" from the ⋮ menu. The integration then stops fetching data for it.
+To enable it again, find it under Settings -> Devices and Services -> Devices
+(it may be hidden by the filter for disabled devices); Home Assistant reloads
+the integration automatically after about 30 seconds.
 
 ## Development
 

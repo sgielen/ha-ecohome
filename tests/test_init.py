@@ -57,3 +57,28 @@ async def test_shared_devices_are_set_up(hass, config_entry, mock_login):
         assert entities.async_get_entity_id("climate", DOMAIN, f"{code}_heating") is not None
     assert devices.async_get_device(identifiers={(DOMAIN, shared_code)}).name == "Neighbour's heat pump"
     mock_login.list_devices.assert_not_called()
+
+
+async def test_disabled_devices_are_not_set_up(hass, config_entry, mock_login):
+    """A device the user disabled in Home Assistant is skipped entirely: no API calls, no entities."""
+    disabled_code = "WQ0B07654321"
+    mock_login.list_all_devices.return_value = [
+        *MOCK_DEVICES,
+        {"device_code": disabled_code, "device_nick_name": "Disabled heat pump", "device_name": "Heat Pump"},
+    ]
+    config_entry.add_to_hass(hass)
+    devices = dr.async_get(hass)
+    disabled = devices.async_get_or_create(
+        config_entry_id=config_entry.entry_id, identifiers={(DOMAIN, disabled_code)}
+    )
+    devices.async_update_device(disabled.id, disabled_by=dr.DeviceEntryDisabler.USER)
+
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert config_entry.state == ConfigEntryState.LOADED
+    coordinators = hass.data[DOMAIN][config_entry.entry_id]
+    assert [c.device_code for c in coordinators] == [DEVICE_CODE]
+    requested = {call.args[0] for call in mock_login.get_device_detail.await_args_list}
+    assert requested == {DEVICE_CODE}
+    assert er.async_get(hass).async_get_entity_id("climate", DOMAIN, f"{disabled_code}_heating") is None
