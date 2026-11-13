@@ -95,3 +95,11 @@ async def test_mismatch_issue_removed_when_resolved(hass, setup_integration, moc
     assert ir.async_get(hass).async_get_issue(DOMAIN, MISMATCH_ISSUE_ID) is None
     assert hass.states.get(card_entity_id(hass, "climate", "heating")).state == "heat"
 
+
+
+async def test_mismatch_issue_removed_on_unload(hass, setup_integration, mock_login):
+    await _refresh_with_mismatch(hass, setup_integration, mock_login)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, MISMATCH_ISSUE_ID) is not None
+
+    assert await hass.config_entries.async_unload(setup_integration.entry_id)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, MISMATCH_ISSUE_ID) is None

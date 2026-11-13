@@ -3,10 +3,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, MANUFACTURER
 from .coordinator import EcoHomeCoordinator
+from .entity import EcoHomeEntity
 
 _UNIT_TO_DEVICE_CLASS: dict[str, SensorDeviceClass] = {
     "°C": SensorDeviceClass.TEMPERATURE,
@@ -58,7 +58,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class EcoHomeSensor(CoordinatorEntity[EcoHomeCoordinator], SensorEntity):  # type: ignore[misc]
+class EcoHomeSensor(EcoHomeEntity, SensorEntity):  # type: ignore[misc]
     _attr_has_entity_name = True
 
     def __init__(self, coordinator: EcoHomeCoordinator, param: dict, source: str) -> None:

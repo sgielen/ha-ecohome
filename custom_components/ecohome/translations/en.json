@@ -31,6 +31,10 @@
     "card_mismatch": {
       "title": "Eco-Home: unexpected {id_kind} card on {device_name}",
       "description": "The heat pump **{device_name}** ({device_code}) reported card `{card_id}`. This integration knows that card as the {id_kind} card, but its contents indicate a {mode_kind} card.\n\nTo make sure the wrong function is never switched or adjusted, the integration ignores this card. The {id_kind} entity therefore stays missing or unavailable until this is resolved. This warning disappears automatically once the heat pump reports a consistent card again.\n\nIf this warning persists, please [open an issue]({issue_tracker}) and include the card data below. The Home Assistant log contains a warning with the data of all cards as well.\n\n`{card}`"
+    },
+    "device_offline": {
+      "title": "Eco-Home: {device_name} is offline",
+      "description": "The Eco-Home cloud has reported the heat pump **{device_name}** ({device_code}) as offline since {offline_since}, for more than {minutes} minutes.\n\nWhile it is offline, the cloud keeps showing the last known values, so this integration marks the heat pump's entities as unavailable. The connectivity sensor shows when it is back.\n\nCheck the network connection of the heat pump or its control panel; restarting it often helps. This warning disappears automatically once the heat pump is back online."
     }
   }
 }

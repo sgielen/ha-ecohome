@@ -5,10 +5,19 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, callback
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .coordinator import EcoHomeCoordinator
 
 CardFinder = Callable[[list[dict[str, Any]]], dict[str, Any] | None]
+
+
+class EcoHomeEntity(CoordinatorEntity[EcoHomeCoordinator]):
+    """Entity showing heat pump data; unavailable while the heat pump is offline."""
+
+    @property
+    def available(self) -> bool:
+        return super().available and self.coordinator.online
 
 
 def card_list(coordinator: EcoHomeCoordinator) -> list[dict[str, Any]]:

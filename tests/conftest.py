@@ -13,6 +13,7 @@ MOCK_DEVICES = [
         "device_code": DEVICE_CODE,
         "device_nick_name": "My heat pump",
         "device_name": "Heating & Cooling Heat Pump",
+        "device_status": "ONLINE",
     }
 ]
 

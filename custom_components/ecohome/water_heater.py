@@ -7,11 +7,10 @@ from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, HEATING_CARD_ID, MANUFACTURER
 from .coordinator import EcoHomeCoordinator
-from .entity import async_add_entity_when_card_present, card_list
+from .entity import EcoHomeEntity, async_add_entity_when_card_present, card_list
 
 OPERATION_ON = "on"
 OPERATION_OFF = "off"
@@ -36,7 +35,7 @@ async def async_setup_entry(
         )
 
 
-class EcoHomeWaterHeater(CoordinatorEntity[EcoHomeCoordinator], WaterHeaterEntity):  # type: ignore[misc]
+class EcoHomeWaterHeater(EcoHomeEntity, WaterHeaterEntity):  # type: ignore[misc]
     _attr_supported_features = (
         WaterHeaterEntityFeature.TARGET_TEMPERATURE
         | WaterHeaterEntityFeature.OPERATION_MODE

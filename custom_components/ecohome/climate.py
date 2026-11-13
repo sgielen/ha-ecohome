@@ -5,11 +5,10 @@ from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, HOT_WATER_CARD_ID, MANUFACTURER
 from .coordinator import EcoHomeCoordinator
-from .entity import async_add_entity_when_card_present, card_list
+from .entity import EcoHomeEntity, async_add_entity_when_card_present, card_list
 
 
 def _heating_card(cards: list) -> dict | None:
@@ -31,7 +30,7 @@ async def async_setup_entry(
         )
 
 
-class EcoHomeClimate(CoordinatorEntity[EcoHomeCoordinator], ClimateEntity):  # type: ignore[misc]
+class EcoHomeClimate(EcoHomeEntity, ClimateEntity):  # type: ignore[misc]
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_has_entity_name = True

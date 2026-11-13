@@ -1,12 +1,13 @@
 import asyncio
 import json
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from ecohome import AsyncEcoHomeClient, SessionExpiredError
 
@@ -17,6 +18,7 @@ from .const import (
     HEATING_CARD_ID,
     HOT_WATER_CARD_ID,
     ISSUE_TRACKER_URL,
+    OFFLINE_ISSUE_DELAY_MINUTES,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,6 +51,31 @@ class EcoHomeCoordinator(DataUpdateCoordinator):
         self._client: AsyncEcoHomeClient | None = None
         # Repair issue IDs of cards whose ID contradicts their modeList, currently reported.
         self._card_mismatch_issues: set[str] = set()
+        # Online state from the previous successful update; None before the first one.
+        self._was_online: bool | None = None
+        # When the heat pump was first seen offline in the current outage, and whether the
+        # Repairs issue for that outage has been created.
+        self._offline_since: datetime | None = None
+        self._offline_issue_created = False
+
+    @property
+    def _offline_issue_id(self) -> str:
+        return f"device_offline_{self.device_code}"
+
+    def async_clear_issues(self) -> None:
+        """Remove this device's Repairs issues, e.g. when the integration is unloaded."""
+        for issue_id in {self._offline_issue_id, *self._card_mismatch_issues}:
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+        self._card_mismatch_issues = set()
+        self._offline_issue_created = False
+
+    @property
+    def online(self) -> bool:
+        """Whether the cloud reported the heat pump as online in the last successful update.
+
+        While offline, the cloud keeps serving the last known values, so they must not be shown.
+        """
+        return bool(self.data and self.data.get("online", True))
 
     async def _get_client(self) -> AsyncEcoHomeClient:
         if self._client is None:
@@ -85,17 +112,77 @@ class EcoHomeCoordinator(DataUpdateCoordinator):
 
     async def _fetch(self) -> dict:
         client = await self._get_client()
-        detail, sensor_params, operational_params = await asyncio.gather(
+        devices, detail, sensor_params, operational_params = await asyncio.gather(
+            client.list_all_devices(),
             client.get_device_detail(self.device_code),
             client.get_param_list(self.device_code, 0),
             client.get_param_list(self.device_code, 1),
         )
         self._check_card_consistency(detail)
+        record = next((d for d in devices if d.get("device_code") == self.device_code), None)
+        online = record is not None and record.get("device_status") != "OFFLINE"
+        self._log_online_change(online, record)
+        self._update_offline_issue(online)
         return {
+            "online": online,
             "detail": detail,
             "sensors": _flatten_params(sensor_params),
             "operational": _flatten_params(operational_params),
         }
+
+    def _log_online_change(self, online: bool, record: dict | None) -> None:
+        """Log once when the heat pump goes offline (or is offline at startup) and when it returns."""
+        previous, self._was_online = self._was_online, online
+        if online == previous or (online and previous is None):
+            return
+        if online:
+            _LOGGER.info("Heat pump %s (%s) is back online", self.device_name, self.device_code)
+        elif record is None:
+            _LOGGER.warning(
+                "Heat pump %s (%s) is no longer in this account's device list; its entities are "
+                "unavailable until it is listed again",
+                self.device_name,
+                self.device_code,
+            )
+        else:
+            _LOGGER.warning(
+                "Heat pump %s (%s) is offline according to the Eco-Home cloud; its entities are "
+                "unavailable until it is back online. Check the heat pump's network connection",
+                self.device_name,
+                self.device_code,
+            )
+
+    def _update_offline_issue(self, online: bool) -> None:
+        """Show a Repairs issue once the heat pump has been offline for a while; remove it when back."""
+        if online:
+            if self._offline_issue_created:
+                ir.async_delete_issue(self.hass, DOMAIN, self._offline_issue_id)
+            self._offline_since = None
+            self._offline_issue_created = False
+            return
+
+        now = dt_util.utcnow()
+        if self._offline_since is None:
+            self._offline_since = now
+        delay = timedelta(minutes=OFFLINE_ISSUE_DELAY_MINUTES)
+        if self._offline_issue_created or now - self._offline_since < delay:
+            return
+
+        ir.async_create_issue(
+            self.hass,
+            DOMAIN,
+            self._offline_issue_id,
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="device_offline",
+            translation_placeholders={
+                "device_name": self.device_name,
+                "device_code": self.device_code,
+                "offline_since": dt_util.as_local(self._offline_since).strftime("%Y-%m-%d %H:%M"),
+                "minutes": str(OFFLINE_ISSUE_DELAY_MINUTES),
+            },
+        )
+        self._offline_issue_created = True
 
     def _check_card_consistency(self, detail: dict) -> None:
         """Report cards whose ID contradicts their modeList; such cards are ignored by the entities.

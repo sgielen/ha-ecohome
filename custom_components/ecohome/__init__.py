@@ -8,7 +8,7 @@ from ecohome import AsyncEcoHomeClient
 from .const import DOMAIN
 from .coordinator import EcoHomeCoordinator
 
-PLATFORMS = [Platform.CLIMATE, Platform.WATER_HEATER, Platform.SENSOR]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.CLIMATE, Platform.WATER_HEATER, Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -37,7 +37,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        hass.data[DOMAIN].pop(entry.entry_id)
+        coordinators: list[EcoHomeCoordinator] = hass.data[DOMAIN].pop(entry.entry_id)
+        for coordinator in coordinators:
+            coordinator.async_clear_issues()
     return unload_ok
 
 
