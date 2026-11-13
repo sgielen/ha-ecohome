@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Verbinden met Eco-Home",
+        "data": {
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan Eco-Home niet bereiken. Controleer je internetverbinding en probeer het opnieuw.",
+      "invalid_auth": "Ongeldige gebruikersnaam of wachtwoord."
+    },
+    "abort": {
+      "already_configured": "Dit account is al geconfigureerd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Eco-Home-opties",
+        "data": {
+          "update_interval_minutes": "Bijwerkinterval (minuten)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "water_heater": {
+      "hot_water": {
+        "name": "Warm water"
+      }
+    }
+  },
+  "issues": {
+    "card_mismatch_heating": {
+      "title": "Eco-Home: onverwachte verwarmingskaart op {device_name}",
+      "description": "De warmtepomp **{device_name}** ({device_code}) meldde kaart `{card_id}`. Deze integratie kent die kaart als de kaart voor verwarming, maar de inhoud wijst op een kaart voor warm water.\n\nOm te voorkomen dat de verkeerde functie wordt geschakeld of ingesteld, negeert de integratie deze kaart. De verwarmingsentiteit blijft daarom ontbreken of niet beschikbaar totdat dit is opgelost. Deze waarschuwing verdwijnt vanzelf zodra de warmtepomp weer een kloppende kaart meldt.\n\nBlijft deze waarschuwing staan, [meld het probleem dan]({issue_tracker}) en voeg de kaartgegevens hieronder toe. Het logboek van Home Assistant bevat ook een waarschuwing met de gegevens van alle kaarten.\n\n`{card}`"
+    },
+    "card_mismatch_hot_water": {
+      "title": "Eco-Home: onverwachte warmwaterkaart op {device_name}",
+      "description": "De warmtepomp **{device_name}** ({device_code}) meldde kaart `{card_id}`. Deze integratie kent die kaart als de kaart voor warm water, maar de inhoud wijst op een kaart voor verwarming.\n\nOm te voorkomen dat de verkeerde functie wordt geschakeld of ingesteld, negeert de integratie deze kaart. De warmwaterentiteit blijft daarom ontbreken of niet beschikbaar totdat dit is opgelost. Deze waarschuwing verdwijnt vanzelf zodra de warmtepomp weer een kloppende kaart meldt.\n\nBlijft deze waarschuwing staan, [meld het probleem dan]({issue_tracker}) en voeg de kaartgegevens hieronder toe. Het logboek van Home Assistant bevat ook een waarschuwing met de gegevens van alle kaarten.\n\n`{card}`"
+    },
+    "device_offline": {
+      "title": "Eco-Home: {device_name} is offline",
+      "description": "Volgens de Eco-Home-cloud is de warmtepomp **{device_name}** ({device_code}) offline sinds {offline_since}, al langer dan {minutes} minuten.\n\nZolang de warmtepomp offline is, blijft de cloud de laatst bekende waarden tonen. Daarom markeert deze integratie de entiteiten van de warmtepomp als niet beschikbaar. De connectiviteitssensor laat zien wanneer de warmtepomp weer verbonden is.\n\nControleer de netwerkverbinding van de warmtepomp of het bedieningspaneel; opnieuw opstarten helpt vaak. Deze waarschuwing verdwijnt vanzelf zodra de warmtepomp weer online is."
+    }
+  }
+}

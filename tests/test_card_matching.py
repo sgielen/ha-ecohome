@@ -56,16 +56,15 @@ async def test_mismatched_card_logged_and_reported(hass, setup_integration, mock
     issue = ir.async_get(hass).async_get_issue(DOMAIN, MISMATCH_ISSUE_ID)
     assert issue is not None
     assert issue.severity == ir.IssueSeverity.WARNING
-    assert issue.translation_key == "card_mismatch"
+    assert issue.translation_key == "card_mismatch_heating"
     assert issue.translation_placeholders["card_id"] == "0"
-    assert issue.translation_placeholders["id_kind"] == "heating"
     assert '"switchAddress": "1"' in issue.translation_placeholders["card"]
 
     # Every placeholder in the Repairs text must be filled in by the coordinator.
     translations = json.loads(
         (Path(integration.__file__).parent / "translations" / "en.json").read_text()
     )
-    text = translations["issues"]["card_mismatch"]
+    text = translations["issues"][issue.translation_key]
     used = set(re.findall(r"{(\w+)}", text["title"] + text["description"]))
     assert used <= set(issue.translation_placeholders)
 
@@ -103,3 +102,14 @@ async def test_mismatch_issue_removed_on_unload(hass, setup_integration, mock_lo
 
     assert await hass.config_entries.async_unload(setup_integration.entry_id)
     assert ir.async_get(hass).async_get_issue(DOMAIN, MISMATCH_ISSUE_ID) is None
+
+
+async def test_mismatched_hot_water_card_uses_its_own_text(hass, setup_integration, mock_login):
+    detail = copy.deepcopy(MOCK_DETAIL)
+    detail["cardList"][0]["card"] = "0"
+    detail["cardList"][1]["card"] = "2"
+    detail["cardList"][1]["modeList"] = [{"modeMeaning": "Heat"}]
+    await async_refresh_with_detail(hass, setup_integration, detail, mock_login)
+
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, f"card_mismatch_{DEVICE_CODE}_2")
+    assert issue.translation_key == "card_mismatch_hot_water"

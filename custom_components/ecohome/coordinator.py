@@ -194,10 +194,11 @@ class EcoHomeCoordinator(DataUpdateCoordinator):
         for card in cards:
             card_id = card.get("card")
             has_modes = card.get("modeList") is not None
+            # issue_kind selects the translated Repairs text (card_mismatch_<issue_kind>).
             if card_id == HEATING_CARD_ID and not has_modes:
-                id_kind, mode_kind = "heating", "hot water"
+                id_kind, mode_kind, issue_kind = "heating", "hot water", "heating"
             elif card_id == HOT_WATER_CARD_ID and has_modes:
-                id_kind, mode_kind = "hot water", "heating"
+                id_kind, mode_kind, issue_kind = "hot water", "heating", "hot_water"
             else:
                 continue
 
@@ -230,13 +231,11 @@ class EcoHomeCoordinator(DataUpdateCoordinator):
                 issue_id,
                 is_fixable=False,
                 severity=ir.IssueSeverity.WARNING,
-                translation_key="card_mismatch",
+                translation_key=f"card_mismatch_{issue_kind}",
                 translation_placeholders={
                     "device_name": self.device_name,
                     "device_code": self.device_code,
                     "card_id": str(card_id),
-                    "id_kind": id_kind,
-                    "mode_kind": mode_kind,
                     "card": card_json,
                     "issue_tracker": ISSUE_TRACKER_URL,
                 },

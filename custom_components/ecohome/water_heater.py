@@ -44,7 +44,7 @@ class EcoHomeWaterHeater(EcoHomeEntity, WaterHeaterEntity):  # type: ignore[misc
     )
     _attr_operation_list = [OPERATION_ON, OPERATION_OFF]
     _attr_has_entity_name = True
-    _attr_name = "Hot Water"
+    _attr_translation_key = "hot_water"
 
     def __init__(self, coordinator: EcoHomeCoordinator) -> None:
         super().__init__(coordinator)

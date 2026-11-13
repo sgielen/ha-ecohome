@@ -36,3 +36,8 @@ async def test_set_operation_mode(hass, setup_integration, mock_login):
         mock_login.update_switch_state.assert_awaited_once_with(
             DEVICE_CODE, hot_water_card["switchAddress"], expected
         )
+
+
+async def test_name_comes_from_translation(hass, setup_integration):
+    """The name is translated ("Hot water" in English, "Warm water" in Dutch), not hard-coded."""
+    assert hass.states.get(_water_heater_id(hass)).attributes["friendly_name"] == "My heat pump Hot water"
