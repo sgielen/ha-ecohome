@@ -9,15 +9,18 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, MANUFACTURER
+from .const import DOMAIN, HEATING_CARD_ID, MANUFACTURER
 from .coordinator import EcoHomeCoordinator
 
 OPERATION_ON = "on"
 OPERATION_OFF = "off"
 
 
-def _hot_water_card(card_list: list) -> dict | None:
-    return next((c for c in card_list if c.get("modeList") is None), None)
+def _hot_water_card(cards: list) -> dict | None:
+    return next(
+        (c for c in cards if c.get("modeList") is None and c.get("card") != HEATING_CARD_ID),
+        None,
+    )
 
 
 async def async_setup_entry(

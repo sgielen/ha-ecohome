@@ -26,5 +26,11 @@
         }
       }
     }
+  },
+  "issues": {
+    "card_mismatch": {
+      "title": "Eco-Home: unexpected {id_kind} card on {device_name}",
+      "description": "The heat pump **{device_name}** ({device_code}) reported card `{card_id}`. This integration knows that card as the {id_kind} card, but its contents indicate a {mode_kind} card.\n\nTo make sure the wrong function is never switched or adjusted, the integration ignores this card. The {id_kind} entity therefore stays missing or unavailable until this is resolved. This warning disappears automatically once the heat pump reports a consistent card again.\n\nIf this warning persists, please [open an issue]({issue_tracker}) and include the card data below. The Home Assistant log contains a warning with the data of all cards as well.\n\n`{card}`"
+    }
   }
 }

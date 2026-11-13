@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ecohome.const import DOMAIN
@@ -109,3 +110,16 @@ async def setup_integration(hass, config_entry, mock_login):
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     return config_entry
+
+
+def card_entity_id(hass, platform: str, suffix: str) -> str | None:
+    """Entity ID of the climate ("heating") or water heater ("hot_water") entity, if registered."""
+    return er.async_get(hass).async_get_entity_id(platform, DOMAIN, f"{DEVICE_CODE}_{suffix}")
+
+
+async def async_refresh_with_detail(hass, entry, detail: dict, mock_client) -> None:
+    """Let the API return `detail` and run a coordinator refresh."""
+    mock_client.get_device_detail.return_value = detail
+    coordinator = hass.data[DOMAIN][entry.entry_id][0]
+    await coordinator.async_refresh()
+    await hass.async_block_till_done()
