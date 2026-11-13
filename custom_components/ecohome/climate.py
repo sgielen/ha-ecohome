@@ -9,6 +9,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, HOT_WATER_CARD_ID, MANUFACTURER
 from .coordinator import EcoHomeCoordinator
+from .entity import async_add_entity_when_card_present, card_list
 
 
 def _heating_card(cards: list) -> dict | None:
@@ -24,11 +25,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinators: list[EcoHomeCoordinator] = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        EcoHomeClimate(coordinator)
-        for coordinator in coordinators
-        if _heating_card(coordinator.data["detail"]["cardList"]) is not None
-    )
+    for coordinator in coordinators:
+        async_add_entity_when_card_present(
+            entry, coordinator, _heating_card, EcoHomeClimate, async_add_entities
+        )
 
 
 class EcoHomeClimate(CoordinatorEntity[EcoHomeCoordinator], ClimateEntity):  # type: ignore[misc]
@@ -39,7 +39,7 @@ class EcoHomeClimate(CoordinatorEntity[EcoHomeCoordinator], ClimateEntity):  # t
 
     def __init__(self, coordinator: EcoHomeCoordinator) -> None:
         super().__init__(coordinator)
-        card = _heating_card(coordinator.data["detail"]["cardList"])
+        card = _heating_card(card_list(coordinator))
         assert card is not None
         self._switch_address: str = card["switchAddress"]
         self._setting_address: str = card["settingAddress"]
@@ -59,7 +59,7 @@ class EcoHomeClimate(CoordinatorEntity[EcoHomeCoordinator], ClimateEntity):  # t
         self._attr_temperature_unit = (
             UnitOfTemperature.FAHRENHEIT if unit == "°F" else UnitOfTemperature.CELSIUS
         )
-        card = _heating_card(detail["cardList"])
+        card = _heating_card(card_list(self.coordinator))
         if card is None:
             self._attr_hvac_mode = None
             self._attr_current_temperature = None
@@ -74,6 +74,10 @@ class EcoHomeClimate(CoordinatorEntity[EcoHomeCoordinator], ClimateEntity):  # t
             self._attr_target_temperature = float(card["settingTemp"])
         except (ValueError, TypeError):
             self._attr_target_temperature = None
+
+    @property
+    def available(self) -> bool:
+        return super().available and _heating_card(card_list(self.coordinator)) is not None
 
     def _handle_coordinator_update(self) -> None:
         self._update_attrs()

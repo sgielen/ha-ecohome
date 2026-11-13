@@ -5,7 +5,7 @@ import logging
 import re
 from pathlib import Path
 
-from homeassistant.const import STATE_UNKNOWN
+from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.helpers import issue_registry as ir
 
 import custom_components.ecohome as integration
@@ -74,7 +74,7 @@ async def test_mismatched_card_logged_and_reported(hass, setup_integration, mock
     assert "switchAddress" in warnings[0].getMessage()
 
     # The mismatched card is not used: no climate, and the water heater keeps its own card.
-    assert hass.states.get(card_entity_id(hass, "climate", "heating")).state == STATE_UNKNOWN
+    assert hass.states.get(card_entity_id(hass, "climate", "heating")).state == STATE_UNAVAILABLE
     water_heater = hass.states.get(card_entity_id(hass, "water_heater", "hot_water"))
     assert water_heater.attributes["current_temperature"] == 45.0
 
