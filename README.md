@@ -43,6 +43,28 @@ To enable it again, find it under Settings -> Devices and Services -> Devices
 (it may be hidden by the filter for disabled devices); Home Assistant reloads
 the integration automatically after about 30 seconds.
 
+### Language
+
+The names of the sensors and settings come from Eco-Home itself, in the language
+of Home Assistant. Eco-Home supports Chinese, Dutch, English, French, German,
+Italian, Polish, Portuguese, Russian and Spanish. If the language is unsupported
+by the Eco-Home API, the fallback language is Dutch. When you change the language
+of Home Assistant, the integration reloads to pick up the new names.
+
+To use a different language than Home Assistant, open the integration's options
+(Settings -> Devices and Services -> Eco-Home -> Configure) and enter a language
+such as `en`, `nl` or `fr`. Leave the field empty to follow Home Assistant again.
+
+Changing the language changes the names of the entities, but not their entity
+IDs, so automations and dashboards keep working. Names you have given entities
+yourself are kept as well. In some languages Eco-Home gives different sensors
+the same name; in French, for example, both the room and the outdoor temperature
+are called "Température ambiante". The integration then adds the sensor's
+address to the name, such as "Température ambiante (1000)", so that you can
+tell them apart.
+
+Versions before 0.1.8 always showed Dutch names.
+
 ## Development
 
 ### Running tests

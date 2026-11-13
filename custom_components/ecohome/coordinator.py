@@ -12,6 +12,7 @@ from homeassistant.util import dt as dt_util
 from ecohome import AsyncEcoHomeClient, SessionExpiredError
 
 from .const import (
+    CONF_LANGUAGE,
     CONF_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
@@ -20,9 +21,17 @@ from .const import (
     ISSUE_TRACKER_URL,
     OFFLINE_ISSUE_DELAY_MINUTES,
 )
-from .language import api_language
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def api_language(hass: HomeAssistant, entry: ConfigEntry) -> str:
+    """The language for names and labels from the Eco-Home API.
+
+    This is the language configured in the options, or else Home Assistant's own language. The
+    ecohome library maps it to a locale the API supports, and falls back to Dutch.
+    """
+    return (entry.options.get(CONF_LANGUAGE) or "").strip() or hass.config.language
 
 
 def _flatten_params(param_list: list) -> list[dict]:
@@ -49,7 +58,7 @@ class EcoHomeCoordinator(DataUpdateCoordinator):
         self.device_name: str = device.get("device_nick_name") or device["device_code"]
         self.device_model: str = device.get("device_name") or "Eco-Home"
         self.device_img_url: str | None = device.get("product_img_url")
-        self._language = api_language(hass.config.language)
+        self._language = api_language(hass, entry)
         self._client: AsyncEcoHomeClient | None = None
         # Repair issue IDs of cards whose ID contradicts their modeList, currently reported.
         self._card_mismatch_issues: set[str] = set()

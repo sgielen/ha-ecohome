@@ -26,8 +26,8 @@ async def test_session_relogin_preserves_language(hass, config_entry):
 
         await coordinator._async_update_data()
 
-    assert client_class.login.await_args_list[0].kwargs == {"language": "de_DE"}
+    assert client_class.login.await_args_list[0].kwargs == {"language": "de"}
     assert client_class.login.await_args_list[1].kwargs == {
         "force_relogin": True,
-        "language": "de_DE",
+        "language": "de",
     }

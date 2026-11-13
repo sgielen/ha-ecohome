@@ -22,7 +22,11 @@
       "init": {
         "title": "Eco-Home options",
         "data": {
-          "update_interval_minutes": "Update interval (minutes)"
+          "update_interval_minutes": "Update interval (minutes)",
+          "language": "Language of names and labels"
+        },
+        "data_description": {
+          "language": "The language in which Eco-Home names the heat pump's sensors and settings, for example en, nl or fr. Leave empty to use the Home Assistant language. If the language is unsupported by the Eco-Home API, the fallback language is Dutch."
         }
       }
     }

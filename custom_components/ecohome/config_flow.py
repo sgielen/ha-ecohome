@@ -7,8 +7,7 @@ from homeassistant.helpers import selector
 
 from ecohome import AsyncEcoHomeClient, AuthenticationFailedError
 
-from .const import CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES, DOMAIN
-from .language import api_language
+from .const import CONF_LANGUAGE, CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +22,7 @@ class EcoHomeConfigFlow(ConfigFlow, domain=DOMAIN):
                 await AsyncEcoHomeClient.login(
                     user_input["username"],
                     user_input["password"],
-                    language=api_language(self.hass.config.language),
+                    language=self.hass.config.language,
                 )
             except AuthenticationFailedError:
                 errors["base"] = "invalid_auth"
@@ -61,9 +60,12 @@ class EcoHomeConfigFlow(ConfigFlow, domain=DOMAIN):
 class EcoHomeOptionsFlow(OptionsFlow):
     async def async_step_init(self, user_input=None):
         if user_input is not None:
-            return self.async_create_entry(data=user_input)
+            # An empty language (or none, when the field was cleared) means Home Assistant's own.
+            language = (user_input.get(CONF_LANGUAGE) or "").strip()
+            return self.async_create_entry(data={**user_input, CONF_LANGUAGE: language})
 
         current = self.config_entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES)
+        current_language = self.config_entry.options.get(CONF_LANGUAGE) or ""
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema({
@@ -75,5 +77,8 @@ class EcoHomeOptionsFlow(OptionsFlow):
                         unit_of_measurement="minutes",
                     )
                 ),
+                vol.Optional(
+                    CONF_LANGUAGE, description={"suggested_value": current_language}
+                ): selector.TextSelector(),
             }),
         )

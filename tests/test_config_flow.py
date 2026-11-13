@@ -7,7 +7,7 @@ from homeassistant.data_entry_flow import FlowResultType
 from custom_components.ecohome.const import DOMAIN
 
 WRONG_PASSWORD = AuthenticationFailedError(
-    "login", "-1", "Fout gebruikersnaam of wachtwoord"
+    "login", "-1", "Error username or password"
 )
 
 
@@ -31,7 +31,7 @@ async def test_user_step_creates_entry(hass, mock_client):
     cls.login.assert_awaited_once_with(
         "test@example.com",
         "secret",
-        language="en_US",
+        language="en",
     )
 
 
@@ -140,3 +140,26 @@ async def test_duplicate_account_aborts(hass, config_entry, mock_login):
 
     assert result["type"] == FlowResultType.ABORT
     assert result["reason"] == "already_configured"
+
+
+async def test_options_flow_sets_language_and_reloads(hass, setup_integration, mock_login):
+    """A configured language is stored without surrounding whitespace and used after the reload."""
+    result = await hass.config_entries.options.async_init(setup_integration.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"update_interval_minutes": 5, "language": " fr "}
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert setup_integration.options == {"update_interval_minutes": 5, "language": "fr"}
+    assert mock_login.integration_login.await_args.kwargs == {"language": "fr"}
+
+
+async def test_options_flow_without_language_means_home_assistant_language(hass, setup_integration):
+    result = await hass.config_entries.options.async_init(setup_integration.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"update_interval_minutes": 5}
+    )
+    await hass.async_block_till_done()
+
+    assert setup_integration.options == {"update_interval_minutes": 5, "language": ""}
