@@ -1,9 +1,10 @@
 from homeassistant.components.water_heater import (
+    STATE_HEAT_PUMP,
     WaterHeaterEntity,
     WaterHeaterEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import STATE_OFF, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -12,8 +13,9 @@ from .const import DOMAIN, HEATING_CARD_ID, MANUFACTURER
 from .coordinator import EcoHomeCoordinator
 from .entity import EcoHomeEntity, async_add_entity_when_card_present, card_list
 
-OPERATION_ON = "on"
-OPERATION_OFF = "off"
+# Standard Home Assistant operation modes, so the frontend translates them ("Heat pump", "Off").
+OPERATION_ON = STATE_HEAT_PUMP
+OPERATION_OFF = STATE_OFF
 
 
 def _hot_water_card(cards: list) -> dict | None:
