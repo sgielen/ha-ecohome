@@ -75,3 +75,37 @@ async def test_unicode_celsius_unit_is_normalized(hass, setup_integration):
     assert state.state == "38.0"
     assert state.attributes[ATTR_UNIT_OF_MEASUREMENT] == "°C"
     assert state.attributes[ATTR_DEVICE_CLASS] == SensorDeviceClass.TEMPERATURE
+
+
+async def test_duplicate_names_get_address(hass, config_entry, mock_login):
+    """Parameters with the same name (as in some languages) are told apart by their address."""
+    sensor_params = [
+        {"address": "1000", "addressValue": "21.5", "pointName": "Température ambiante", "unit": "°C"},
+        {"address": "1001", "addressValue": "5.0", "pointName": "Température ambiante", "unit": "°C"},
+        {"address": "1002", "addressValue": "45.0", "pointName": "Température de l'eau", "unit": "°C"},
+    ]
+    operational_params = [
+        {"address": "2000", "addressValue": "45.0", "pointName": "Température de l'eau ", "unit": "°C"},
+        {"address": "2001", "addressValue": "1200", "pointName": "Vitesse du compresseur", "unit": "rpm"},
+    ]
+
+    async def get_param_list(device_code, param_type):
+        return sensor_params if param_type == 0 else operational_params
+
+    mock_login.get_param_list.side_effect = get_param_list
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    registry = er.async_get(hass)
+
+    def name(source, address):
+        entity_id = registry.async_get_entity_id("sensor", DOMAIN, f"{DEVICE_CODE}_{source}_{address}")
+        return registry.async_get(entity_id).original_name
+
+    assert name("sensors", "1000") == "Température ambiante (1000)"
+    assert name("sensors", "1001") == "Température ambiante (1001)"
+    # Duplicates across the two parameter lists count as well; names are compared after stripping.
+    assert name("sensors", "1002") == "Température de l'eau (1002)"
+    assert name("operational", "2000") == "Température de l'eau (2000)"
+    assert name("operational", "2001") == "Vitesse du compresseur"

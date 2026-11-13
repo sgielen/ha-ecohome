@@ -1,6 +1,7 @@
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ecohome.const import DOMAIN, MANUFACTURER
 
@@ -10,6 +11,69 @@ from .conftest import DEVICE_CODE, MOCK_DEVICES
 async def test_setup_loads_entry(hass, setup_integration):
     entry = setup_integration
     assert entry.state == ConfigEntryState.LOADED
+
+
+async def test_setup_passes_home_assistant_language(
+    hass, setup_integration, mock_login
+):
+    mock_login.integration_login.assert_awaited_once_with(
+        "test@example.com",
+        "testpassword",
+        language="en",
+    )
+    mock_login.coordinator_login.assert_awaited_once_with(
+        "test@example.com",
+        "testpassword",
+        language="en",
+    )
+
+
+async def test_setup_passes_configured_language(hass, mock_login):
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={"username": "test@example.com", "password": "testpassword"},
+        options={"language": "fr"},
+        unique_id="test@example.com",
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert mock_login.integration_login.await_args.kwargs == {"language": "fr"}
+    assert mock_login.coordinator_login.await_args.kwargs == {"language": "fr"}
+
+
+async def test_reload_when_home_assistant_language_changes(hass, setup_integration, mock_login):
+    await hass.config.async_update(language="de")
+    await hass.async_block_till_done()
+
+    assert mock_login.integration_login.await_count == 2
+    assert mock_login.integration_login.await_args.kwargs == {"language": "de"}
+    assert setup_integration.state == ConfigEntryState.LOADED
+
+
+async def test_no_reload_for_other_core_config_changes(hass, setup_integration, mock_login):
+    await hass.config.async_update(location_name="Elsewhere")
+    await hass.async_block_till_done()
+
+    assert mock_login.integration_login.await_count == 1
+
+
+async def test_no_reload_on_language_change_when_language_configured(hass, mock_login):
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={"username": "test@example.com", "password": "testpassword"},
+        options={"language": "fr"},
+        unique_id="test@example.com",
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    await hass.config.async_update(language="de")
+    await hass.async_block_till_done()
+
+    assert mock_login.integration_login.await_count == 1
 
 
 async def test_setup_registers_all_entity_types(hass, setup_integration):

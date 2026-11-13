@@ -1,15 +1,15 @@
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.const import EVENT_CORE_CONFIG_UPDATE, Platform
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
 
 from ecohome import AsyncEcoHomeClient
 
 from .const import DOMAIN
-from .coordinator import EcoHomeCoordinator
+from .coordinator import EcoHomeCoordinator, api_language
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,10 +17,12 @@ PLATFORMS = [Platform.BINARY_SENSOR, Platform.CLIMATE, Platform.WATER_HEATER, Pl
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    language = api_language(hass, entry)
     try:
         client = await AsyncEcoHomeClient.login(
             entry.data["username"],
             entry.data["password"],
+            language=language,
         )
         devices = await client.list_all_devices()
     except Exception as err:
@@ -43,6 +45,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
+
+    @callback
+    def _async_core_config_updated(event: Event) -> None:
+        # Each Eco-Home client keeps the language it logged in with, so a new language needs a
+        # reload. This only happens when no language is configured in the options.
+        if api_language(hass, entry) != language:
+            _LOGGER.debug("Language changed, reloading to fetch names and labels in it")
+            hass.config_entries.async_schedule_reload(entry.entry_id)
+
+    entry.async_on_unload(hass.bus.async_listen(EVENT_CORE_CONFIG_UPDATE, _async_core_config_updated))
 
     return True
 

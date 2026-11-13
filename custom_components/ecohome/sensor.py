@@ -1,3 +1,5 @@
+from collections import Counter
+
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -44,6 +46,18 @@ def _all_params(items: list[dict]) -> list[dict]:
     return result
 
 
+def _disambiguate_names(params: list[dict]) -> None:
+    """Add the address to names that occur more than once on a device, so the entities can be told apart.
+
+    In some languages the API gives different parameters the same name; in French, for example, both
+    the room and the outdoor temperature are called "Température ambiante".
+    """
+    counts = Counter(param["name"] for param in params)
+    for param in params:
+        if counts[param["name"]] > 1:
+            param["name"] = f"{param['name']} ({param['address']})"
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -52,9 +66,13 @@ async def async_setup_entry(
     coordinators: list[EcoHomeCoordinator] = hass.data[DOMAIN][entry.entry_id]
     entities: list[EcoHomeSensor] = []
     for coordinator in coordinators:
-        for source in ("sensors", "operational"):
-            for param in _all_params(coordinator.data[source]):
-                entities.append(EcoHomeSensor(coordinator, param, source))
+        params = [
+            (source, param)
+            for source in ("sensors", "operational")
+            for param in _all_params(coordinator.data[source])
+        ]
+        _disambiguate_names([param for _, param in params])
+        entities.extend(EcoHomeSensor(coordinator, param, source) for source, param in params)
     async_add_entities(entities)
 
 

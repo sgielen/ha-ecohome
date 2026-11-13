@@ -22,7 +22,11 @@
       "init": {
         "title": "Eco-Home-opties",
         "data": {
-          "update_interval_minutes": "Bijwerkinterval (minuten)"
+          "update_interval_minutes": "Bijwerkinterval (minuten)",
+          "language": "Taal van namen en labels"
+        },
+        "data_description": {
+          "language": "De taal waarin Eco-Home de sensoren en instellingen van de warmtepomp benoemt, bijvoorbeeld en, nl of fr. Laat leeg om de taal van Home Assistant te gebruiken. Als de Eco-Home-API de taal niet ondersteunt, wordt Nederlands gebruikt."
         }
       }
     }
