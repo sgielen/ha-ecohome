@@ -11,7 +11,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, HEATING_CARD_ID, MANUFACTURER
 from .coordinator import EcoHomeCoordinator
-from .entity import EcoHomeEntity, async_add_entity_when_card_present, card_list
+from .entity import (
+    EcoHomeEntity,
+    async_add_entity_when_card_present,
+    card_list,
+    card_temperature_range,
+    card_temperature_step,
+)
 
 # Standard Home Assistant operation modes, so the frontend translates them ("Heat pump", "Off").
 OPERATION_ON = STATE_HEAT_PUMP
@@ -75,6 +81,8 @@ class EcoHomeWaterHeater(EcoHomeEntity, WaterHeaterEntity):  # type: ignore[misc
             self._attr_target_temperature = None
             return
         self._attr_current_operation = OPERATION_ON if card["curSwitch"] else OPERATION_OFF
+        self._attr_min_temp, self._attr_max_temp = card_temperature_range(card)
+        self._attr_target_temperature_step = card_temperature_step(card)
         try:
             self._attr_current_temperature = float(card["curTempMain"])
         except (ValueError, TypeError):

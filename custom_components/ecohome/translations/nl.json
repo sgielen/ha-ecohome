@@ -38,6 +38,11 @@
       }
     }
   },
+  "exceptions": {
+    "climate_curve_active": {
+      "message": "De doeltemperatuur van {device_name} volgt een verwarmings- of koelcurve en kan daarom niet worden aangepast. Zet in de Eco-Home-app de verwarmingscurve (of koelcurve) van de zone op Uitzetten om de temperatuur zelf in te stellen."
+    }
+  },
   "issues": {
     "card_mismatch_heating": {
       "title": "Eco-Home: onverwachte verwarmingskaart op {device_name}",

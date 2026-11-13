@@ -45,6 +45,11 @@
       "description": "The Eco-Home cloud has reported the heat pump **{device_name}** ({device_code}) as offline since {offline_since}, for more than {minutes} minutes.\n\nWhile it is offline, the cloud keeps showing the last known values, so this integration marks the heat pump's entities as unavailable. The connectivity sensor shows when it is back.\n\nCheck the network connection of the heat pump or its control panel; restarting it often helps. This warning disappears automatically once the heat pump is back online."
     }
   },
+  "exceptions": {
+    "climate_curve_active": {
+      "message": "The target temperature of {device_name} follows a heating or cooling curve, so it can't be changed. To set it yourself, set the zone's Heating Curve (or Cooling Curve) to Disable in the Eco-Home app."
+    }
+  },
   "entity": {
     "water_heater": {
       "hot_water": {

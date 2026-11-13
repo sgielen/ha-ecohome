@@ -3,12 +3,19 @@ from homeassistant.components.climate.const import ClimateEntityFeature, HVACMod
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, HOT_WATER_CARD_ID, MANUFACTURER
+from .const import DOMAIN, HOT_WATER_CARD_ID, MANUFACTURER, WIDE_MAX_TEMP, WIDE_MIN_TEMP
 from .coordinator import EcoHomeCoordinator
-from .entity import EcoHomeEntity, async_add_entity_when_card_present, card_list
+from .entity import (
+    EcoHomeEntity,
+    async_add_entity_when_card_present,
+    card_list,
+    card_temperature_range,
+    card_temperature_step,
+)
 
 
 def _heating_card(cards: list) -> dict | None:
@@ -16,6 +23,15 @@ def _heating_card(cards: list) -> dict | None:
         (c for c in cards if c.get("modeList") is not None and c.get("card") != HOT_WATER_CARD_ID),
         None,
     )
+
+
+def _follows_climate_curve(card: dict) -> bool:
+    """Whether the target temperature follows a heating or cooling curve; it can't be set then.
+
+    The API calls these "climate curves" (isClimateCurve). In the Eco-Home app they are the
+    per-zone Heating Curve and Cooling Curve settings, which turn off with the "Disable" option.
+    """
+    return card.get("isClimateCurve") is True
 
 
 async def async_setup_entry(
@@ -65,6 +81,13 @@ class EcoHomeClimate(EcoHomeEntity, ClimateEntity):  # type: ignore[misc]
             self._attr_target_temperature = None
             return
         self._attr_hvac_mode = HVACMode.HEAT if card["curSwitch"] else HVACMode.OFF
+        if _follows_climate_curve(card):
+            # The device then reports the curve's current target as both ends of the range. A wide
+            # range lets a change reach async_set_temperature, which explains why it is refused.
+            self._attr_min_temp, self._attr_max_temp = WIDE_MIN_TEMP, WIDE_MAX_TEMP
+        else:
+            self._attr_min_temp, self._attr_max_temp = card_temperature_range(card)
+        self._attr_target_temperature_step = card_temperature_step(card)
         try:
             self._attr_current_temperature = float(card["curTempMain"])
         except (ValueError, TypeError):
@@ -91,5 +114,13 @@ class EcoHomeClimate(EcoHomeEntity, ClimateEntity):  # type: ignore[misc]
     async def async_set_temperature(self, **kwargs) -> None:
         if (temp := kwargs.get("temperature")) is None:
             return
+        card = _heating_card(card_list(self.coordinator))
+        if card is not None and _follows_climate_curve(card):
+            # The device would ignore the new temperature, as the Eco-Home app does.
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="climate_curve_active",
+                translation_placeholders={"device_name": self.coordinator.device_name},
+            )
         await self.coordinator.async_set_value(self._setting_address, int(temp))
         await self.coordinator.async_request_refresh()

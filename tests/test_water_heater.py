@@ -41,3 +41,24 @@ async def test_set_operation_mode(hass, setup_integration, mock_login):
 async def test_name_comes_from_translation(hass, setup_integration):
     """The name is translated ("Hot water" in English, "Warm water" in Dutch), not hard-coded."""
     assert hass.states.get(_water_heater_id(hass)).attributes["friendly_name"] == "My heat pump Hot water"
+
+
+async def test_range_comes_from_card(hass, setup_integration):
+    """Home Assistant's default range is 110-140 °F (43-60 °C); the device allows more."""
+    state = hass.states.get(_water_heater_id(hass))
+
+    assert state.attributes["min_temp"] == 18
+    assert state.attributes["max_temp"] == 75
+    assert state.attributes["target_temp_step"] == 1
+
+
+async def test_set_temperature_above_home_assistant_default(hass, setup_integration, mock_login):
+    await hass.services.async_call(
+        "water_heater", "set_temperature",
+        {"entity_id": _water_heater_id(hass), "temperature": 70},
+        blocking=True,
+    )
+
+    mock_login.set_value.assert_awaited_once_with(
+        DEVICE_CODE, MOCK_DETAIL["cardList"][1]["settingAddress"], 70
+    )

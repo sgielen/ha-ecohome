@@ -12,3 +12,8 @@ OFFLINE_ISSUE_DELAY_MINUTES = 10
 # have a modeList; these IDs (as seen on a Batavia Heat unit) are only used to reject a mismatch.
 HEATING_CARD_ID = "0"
 HOT_WATER_CARD_ID = "2"
+
+# Target temperature range used when a card reports no valid range, and for heating while it follows
+# a heating or cooling curve. Wide enough for the water temperatures of both heating and hot water.
+WIDE_MIN_TEMP = 5.0
+WIDE_MAX_TEMP = 75.0

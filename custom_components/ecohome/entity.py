@@ -7,6 +7,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .const import WIDE_MAX_TEMP, WIDE_MIN_TEMP
 from .coordinator import EcoHomeCoordinator
 
 CardFinder = Callable[[list[dict[str, Any]]], dict[str, Any] | None]
@@ -23,6 +24,26 @@ class EcoHomeEntity(CoordinatorEntity[EcoHomeCoordinator]):
 def card_list(coordinator: EcoHomeCoordinator) -> list[dict[str, Any]]:
     """Return the device's card list, or an empty list when the API has none (e.g. offline)."""
     return coordinator.data["detail"].get("cardList") or []
+
+
+def card_temperature_range(card: dict[str, Any]) -> tuple[float, float]:
+    """Return the target temperature range the device reports for a card, or a wide one if invalid."""
+    try:
+        low, high = float(card["lowerTemp"]), float(card["upperTemp"])
+    except (KeyError, TypeError, ValueError):
+        return WIDE_MIN_TEMP, WIDE_MAX_TEMP
+    if low > high:
+        return WIDE_MIN_TEMP, WIDE_MAX_TEMP
+    return low, high
+
+
+def card_temperature_step(card: dict[str, Any]) -> float:
+    """Return the target temperature step the device reports for a card, or 1 if invalid."""
+    try:
+        step = float(card["stepLength"])
+    except (KeyError, TypeError, ValueError):
+        return 1.0
+    return step if step > 0 else 1.0
 
 
 @callback
