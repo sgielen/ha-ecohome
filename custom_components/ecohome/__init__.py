@@ -17,7 +17,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.data["username"],
             entry.data["password"],
         )
-        devices = await client.list_devices()
+        devices = await client.list_all_devices()
     except Exception as err:
         raise ConfigEntryNotReady(f"Could not connect to Eco-Home API: {err}") from err
 

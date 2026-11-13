@@ -71,7 +71,7 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 @pytest.fixture
 def mock_client():
     client = AsyncMock()
-    client.list_devices.return_value = MOCK_DEVICES
+    client.list_all_devices.return_value = MOCK_DEVICES
     client.get_device_detail.return_value = MOCK_DETAIL
 
     async def get_param_list(device_code, param_type):

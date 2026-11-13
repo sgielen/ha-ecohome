@@ -35,8 +35,8 @@ Assistant.
 After installation, you can add the integration inside Home Assistant settings
 -> Devices and Services, search for Eco-Home.  This requires your username and
 password. If you have only one device, it is immediately added; if you have
-multiple you can select which ones to add.  Devices shared with you cannot be
-added yet, but this is probably an easy fix.
+multiple you can select which ones to add.  Devices that other users have
+shared with you are added as well.
 
 ## Development
 

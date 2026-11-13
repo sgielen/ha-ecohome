@@ -13,7 +13,7 @@ Issues = "https://github.com/sgielen/ha-ecohome/issues"
 [dependency-groups]
 dev = [
     "pytest-homeassistant-custom-component",
-    "ecohome>=0.1.6",
+    "ecohome>=0.1.7",
 ]
 
 [tool.uv]

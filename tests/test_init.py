@@ -37,3 +37,23 @@ async def test_unload_entry(hass, setup_integration):
     assert await hass.config_entries.async_unload(entry.entry_id)
     assert entry.state == ConfigEntryState.NOT_LOADED
     assert DOMAIN not in hass.data or entry.entry_id not in hass.data[DOMAIN]
+
+
+async def test_shared_devices_are_set_up(hass, config_entry, mock_login):
+    """Devices shared with the account (returned by list_all_devices) get their own device and entities."""
+    shared_code = "WQ0B07654321"
+    mock_login.list_all_devices.return_value = [
+        *MOCK_DEVICES,
+        {"device_code": shared_code, "device_nick_name": "Neighbour's heat pump", "device_name": "Heat Pump"},
+    ]
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    devices = dr.async_get(hass)
+    entities = er.async_get(hass)
+    for code in (DEVICE_CODE, shared_code):
+        assert devices.async_get_device(identifiers={(DOMAIN, code)}) is not None
+        assert entities.async_get_entity_id("climate", DOMAIN, f"{code}_heating") is not None
+    assert devices.async_get_device(identifiers={(DOMAIN, shared_code)}).name == "Neighbour's heat pump"
+    mock_login.list_devices.assert_not_called()
